@@ -2,7 +2,7 @@ First, the text inputs are converted into tokens - it turns all of the words int
 This process is called embedding.
 
 These vectors are structured in such a way that each direction can correspond to a different feature in the text.
-For example, if we do $$\text{E(King) - E(Queen)}$$ where $\text{E(Word)}$ denotes the embedded vector for a word, it will be very similar to $$\text{E(Man) - E(Woman)}\\$$
+For example, if we do $$\text{E(King) - E(Queen)}$$ where $\text{E(Word)}$ denotes the embedded vector for a word, it will be very similar to $$\text{E(Man) - E(Woman)}\\[5pt]$$
 
 Each token's vector exists in the $\textbf{Embedding Space}$, which has a very high number of dimensions (the same number of dimensions as the word vector)
 
@@ -12,7 +12,7 @@ Now, let us look at the uses of the dot product.
 The dot product can measure how similar two vectors can be.
 The dot product is done by the following method:
 $$
-\begin{bmatrix} x_1 \\ x_2 \\ x_3 \\ \vdots \\ x_n\end{bmatrix} \cdot \begin{bmatrix} z_1 \\ z_2 \\ z_3 \\ \vdots \\ z_n \end{bmatrix} = x_1z_1 + x_2z_2 + \dots + x_nz_n
+\begin{bmatrix} x_1 \\ x_2 \\ x_3 \\[5pt] \vdots \\ x_n\end{bmatrix} \cdot \begin{bmatrix} z_1 \\ z_2 \\ z_3 \\[5pt] \vdots \\ z_n \end{bmatrix} = x_1z_1 + x_2z_2 + \dots + x_nz_n
 $$
 
 If both of the vectors are in the same direction, this will lead to a large positive number. If it leads to a negative number, they are in opposite directions, and if it is $0$ then the vectors are perpendicular.
@@ -38,9 +38,9 @@ This turns random data into a probability distribution and normalises the data.
 Next, let's imagine that there is a user prompt. What is given to the machine looks something like:
 
 $$
-\text{This is a conversation between a user and a helpful, very knowledgeable AI assistant.} \\
-\text{User : Give me some ideas for what to do when visiting Santiago.} \\
-\text{AI Assistant:} \\
+\text{This is a conversation between a user and a helpful, very knowledgeable AI assistant.} \\[5pt]
+\text{User : Give me some ideas for what to do when visiting Santiago.} \\[5pt]
+\text{AI Assistant:} \\[5pt]
 $$
 This text is then passed through a transformer.
 A transformer is made out of many Attention Layers and MLP layers (Multilayer Perceptron layers) which are stacked one after another.
@@ -51,7 +51,7 @@ These raw inputs are called $\textbf{logits}$.
 Temperature is a constant that is used to calculate the probabilities for each word.
 The probabilites are calculated by the formula
 $$
-\text{Probability = softmax(}\frac{\text{Logits}}{T})
+\text{Probability = softmax}\left(\frac{\text{Logits}}{T}\right)
 $$
 By changing the temperature, we can change how much the function gives to the smaller values.
 If T equals a small number like $0.1$ or $0.2$, a lot of the probability is given to the highest digit. This makes the machine always pick the safest option. If we turn up the temperature, the machine starts to become more random and creative because the probabilities for small words increases.
@@ -92,7 +92,7 @@ Next, we replace each of the columns with the values we calculated by using soft
 
 In the original paper "Attention is all you need" they only use one function
 $$
-\text{Attention}(Q,K,V) = \text{softmax}(\frac{QK^T}{\sqrt{d_k}})V
+\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
 $$
 Here, $T$ stands for transposing K, not temperature. $QK^T$ is a nice way to represent all of the dot products between the Key Vectors and the Query Vectors.
 The $d_k$ stands for the number of dimensions of the Key and Query matrices. The reason why we divide by $\sqrt{d_k}$ is to stop the softmax function from blowing up when we get to very high dimensions.
@@ -170,7 +170,7 @@ $$
 $$
 Another way to express the function is
 $$
-\text{GELU}(x) = x \cdot \frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}}))
+\text{GELU}(x) = x \cdot \frac{1}{2}\left(1+\text{erf}\left(\frac{x}{\sqrt{2}}\right)\right)
 $$
 Here,
 $$
@@ -232,7 +232,7 @@ $$
 $$
 And again, each attention block is 
 $$
-\text{Attention}(Q,K,V) = \text{softmax}(\frac{QK^T}{\sqrt{d_k}})V
+\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
 $$
 So we have to find the derivative of each function. Let's start with the $\text{MLP}()$
 
@@ -248,7 +248,7 @@ $$
 Now, we need to evaluate what $\text{GELU}'(\vec{x})$ is.
 We know that 
 $$
-\text{GELU}(x) = x \cdot \frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}}))
+\text{GELU}(x) = x \cdot \frac{1}{2}\left(1+\text{erf}\left(\frac{x}{\sqrt{2}}\right)\right)
 $$
 and 
 $$
@@ -256,7 +256,7 @@ $$
 $$
 To find $\text{GELU}'(\vec{x})$ we can use product rule, and we get
 $$
-\frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}})) + x\cdot\frac{1}{2}\cdot\text{erf}'(\frac{x}{\sqrt{2}})\cdot \frac{1}{\sqrt{2}}
+\frac{1}{2}\left(1+\text{erf}\left(\frac{x}{\sqrt{2}}\right)\right) + x\cdot\frac{1}{2}\cdot\text{erf}'\left(\frac{x}{\sqrt{2}}\right)\cdot \frac{1}{\sqrt{2}}
 $$
 We can find $\text{erf}'(x)$ by using the Fundamental Theorem of Calculus. The FTC states that 
 $$
@@ -272,9 +272,147 @@ $$
 $$
 Now, putting this all together:
 $$
-\text{GELU}'(\vec{x}) =  \frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}})) + \frac{x}{\sqrt{2\pi}}e^{-\frac{x^2}{2}}
+\text{GELU}'(\vec{x}) =  \frac{1}{2}\left(1+\text{erf}\left(\frac{x}{\sqrt{2}}\right)\right) + \frac{x}{\sqrt{2\pi}}e^{-\frac{x^2}{2}}
 $$
 Finally,
 $$
-\text{MLP}'(\vec{x}) = W_2\cdot (\frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}})) + \frac{x}{\sqrt{2\pi}}e^{-\frac{x^2}{2}})\cdot W_1
+\text{MLP}'(\vec{x}) = W_2\cdot \left(\frac{1}{2}(1+\text{erf}(\frac{x}{\sqrt{2}})) + \frac{x}{\sqrt{2\pi}}e^{-\frac{x^2}{2}}\right)\cdot W_1
 $$
+Now that we are done with $\text{MLP}'$, we can move onto $\text{Attention}'$.
+<br>
+Remember that 
+$$
+\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+Where 
+$$
+\text{softmax} \text{(z)}_i = \frac{e^{z_i}}{\sum{e^{z_j}}}
+$$
+What are we even differentiating with respect to? Remember, the $Q$, $K$, and $V$ are themselves functions of $\vec{x}$, where
+$$
+Q = W_Q \vec{x}\\[5pt]
+K = W_K \vec{x}\\[5pt]
+V = W_V \vec{x}
+$$
+So now we know we are differentiating with respect to $\vec{x}$. The full function is now:
+$$
+\text{Attention}(\vec{x}) = \text{softmax}\left(\frac{W_Q \vec{x}(W_K \vec{x})^T}{\sqrt{d_k}}\right)W_V \vec{x}
+$$
+The last tool we need to differentiate this function is $\text{softmax}'$. What we want is 
+$$\frac{\partial \sigma_i}{\partial z_j}$$
+which is how the $i$th output changes when the $j$th input changes.
+
+There are two seperate cases we need to consider because of the sum in the denominator.
+Case 1 : $i=j$ (finding how each input changes its output)
+In this case, using the quotient rule we get
+$$
+\frac{\partial \sigma_i}{\partial z_j} = \frac{e^{z_i}\sum_j e^{z_j} - e^{z_i}e^{z_i}}{(\sum_j e^{z_j})^2}\\[5pt]
+= \frac{e^{z_i}}{\sum_j e^{z_j}} - \left(\frac{e^{z_i}}{\sum_j e^{z_j}}\right)^2\\[5pt]
+= \sigma_i - \sigma_i^2\\[5pt]
+= \sigma_i(1-\sigma_i)
+$$
+Now, the second case is where $i\neq j$ (finding how a different input changes a different output)
+$$
+\frac{\partial \sigma_i}{\partial z_j} = \frac{0-e^{z_i}e^{z_j}}{(\sum_j e^{z_j})^2}\\[5pt]
+= -\frac{e^{z_i}}{\sum_j e^{z_j}} \cdot \frac{e^{z_j}}{\sum_j e^{z_j}} \\[5pt]
+= -\sigma_i \sigma_j
+$$
+So, the derivative of the softmax function boils down to this square matrix:
+$$
+J_{ij} = \begin{cases}
+\sigma_i(1-\sigma_i) & i=j \\
+-\sigma_i \sigma_j & i\neq j
+\end{cases}
+$$
+This means that for every point in the matrix, if the row and column numbers are the same then the derivative is $\sigma_i(1-\sigma_i)$. Otherwise, it is $-\sigma_i \sigma_j$.
+
+Why is the derivative of the softmax function a matrix? Think about it this way:
+If we even change one input, it changes all of the possible outputs. So for each change in each input, all of them change the possible outputs, so we get a square matrix as a result (often called a Jacobian).
+
+In other places, you may see the derivative being written as $\frac{\partial \sigma_i}{\partial z_j} = \sigma_i(\delta_{ij} - \sigma_j)$ where $\delta_{ij} = 1$ if $i=j$, and $\delta_{ij} = 0$ if $i \neq j$, which is an incredibly simple way to express it.
+
+Now, we can return to the attention function. If we use the product rule, we get
+$$
+\text{Attention}'(\vec{x}) = \left(\text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)\right)' \cdot V + \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) \cdot (V)' \\[5pt]
+$$
+With our calculations for $\text{softmax}'$ and chain rule we get
+$$
+\left(\text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)\right)' = J_{\text{softmax}} \cdot \frac{1}{\sqrt{d_k}} \cdot \frac{\partial QK^T}{\partial \vec{x}}
+$$
+Now, how do we calculate $\frac{\partial QK^T}{\partial \vec{x}}$?
+First, recall that $Q = W_Q \vec{x}$ and $K = W_K \vec{x}$
+Using product rule, we get
+$$
+\frac{\partial QK^T}{\partial \vec{x}} = \frac{\partial Q}{\partial \vec{x}}K^T + Q\frac{\partial K^T}{\partial \vec{x}}
+$$
+Finally, all that is left is to calculate $\frac{\partial Q}{\partial \vec{x}}$ and $\frac{\partial K^T}{\partial \vec{x}}$.
+$$
+\frac{\partial Q}{\partial \vec{x}} = W_Q
+$$
+Sadly, $\frac{\partial K^T}{\partial \vec{x}}$ is a bit more difficult.
+$$
+\frac{\partial K^T}{\partial \vec{x}} = \frac{\partial}{\partial \vec{x}}((W_K \vec{x})^T)\\[5pt]
+= \frac{\partial}{\partial \vec{x}}(\vec{x}^TW_K^T)\\[5pt]
+= (W_K^T)^T = W_K
+$$
+With these simple answers, we get
+$$
+\frac{\partial QK^T}{\partial \vec{x}} = W_QK^T + QW_K
+$$
+So finally,
+$$
+\left(\text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)\right)' = J_{\text{softmax}} \cdot \frac{1}{\sqrt{d_k}} \cdot (W_QK^T + QW_K)
+$$
+All that is left for the derivatives is to calculate $V'$
+This is simply $W_V$ because again, we are differentiating with respect to $\vec{x}$.
+Now, we can finally calculate $\text{Attention}'$
+$$
+\text{Attention}'(\vec{x}) = \left(J_{\text{softmax}} \cdot \frac{1}{\sqrt{d_k}} \cdot (W_QK^T + QW_K)\right) \cdot V + \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) \cdot W_V
+$$
+
+Now we can calculate the derivative of the whole model.
+$$
+\frac{\partial L}{\partial x} = \frac{\partial L}{\partial \hat{p}} \cdot \frac{\partial \hat{p}}{\partial \text{logits}} \cdot \frac{\partial \text{logits}}{\partial \vec{x}_{n}} \cdot \frac{\partial \vec{x}_{n}}{\partial \vec{x}_{n-1}}\cdots
+$$
+We can start off by simplifying this.
+$$
+\frac{\partial L}{\partial \vec{x}} = -\frac{1}{\hat{p}} \cdot J_{\text{softmax}} \cdot W_u \cdot J_{n} \cdot J_{n-1} \cdots J_1
+$$
+Here, $n$ stands for the number of Attention+MLP blocks. In GPT-3, this was $96$.
+First of all, why does $\frac{\partial \hat{p}}{\partial \text{logits}}$ simplify to $J_{\text{softmax}}$? This is because $\hat{p} = \text{softmax}(\text{logits})$, so $\frac{\partial \hat{p}}{\partial \text{logits}} = J_{\text{softmax}}$.
+Secondly, why does $\frac{\partial \text{logits}}{\partial \vec{x}_{\text{final}}} = W_u$? This is because $\text{logits} = W_u\vec{x}_{\text{final}}$, so differentiating gives us $\frac{\partial \text{logits}}{\partial \vec{x}_{\text{final}}} = W_u$.
+Thirdly, what are all of the $J_n$?
+$J_n$ stands for the $n$th $\frac{\partial \vec{x}_ {n}}{\partial \vec{x}_{n-1}}$. In fact, we can simplify $J_n$.
+$J_n$ stands for the derivative of Layer $n$'s output with respect to layer $n$'s input. In the forward pass,
+$$
+\vec{x}_{n-1}' = \vec{x}_{n-1} + \text{Attention}(\vec{x}_{n-1})\\[5pt]
+\vec{x}_n = \vec{x}_{n-1}' + \text{MLP}(\vec{x}_{n-1}')
+$$
+So, when we take the derivative we can use chain rule:
+$$
+\frac{\partial \vec{x}_{n}}{\partial \vec{x}_{n-1}} = \frac{\partial \vec{x}_{n}}{\partial \vec{x}_{n-1}'} \cdot \frac{\partial \vec{x}_{n-1}'}{\partial \vec{x}_{n-1}}
+$$
+So,
+$$
+\frac{\partial \vec{x}_{n-1}'}{\partial \vec{x}_{n-1}} = \mathbf{I} + \text{Attention}'(\vec{x}_{n-1})
+$$
+and
+$$
+\frac{\partial \vec{x}_{n}}{\partial \vec{x}_{n-1}'} = \mathbf{I} + \text{MLP}'(\vec{x}_{n-1}')
+$$
+Since $J_n = \frac{\partial \vec{x}_{n}}{\partial \vec{x}_{n-1}}$, 
+$$
+J_n = (\mathbf{I} + \text{MLP}'(\vec{x}_{n-1}')) \cdot (\mathbf{I} + \text{Attention}'(\vec{x}_{n-1}))
+$$
+However, to actually train the model we need to find $\frac{\partial L}{\partial W_n}$ where $W_n$ is any of the matrices we have used in the forward pass - $W_K$ and etc. To find $\frac{\partial L}{\partial W_n}$ we can find $\frac{\partial \vec{x}_n}{\partial W_n}$ and multiply that by $\frac{\partial L}{\partial \vec{x}_n}$
+
+There are only a few matrices and vectors that we have to change - in the attention blocks, we have to change $W_K$, $W_Q$, and $W_V$. 
+First of all, we will calculate the change needed for the Key Matrix which is $\frac{\partial L}{\partial W_K}$ and to do this we need to calculate $\frac{\partial \vec{x}_n}{\partial W_K}$. This is because of the chain rule and if we do $\frac{\partial \vec{x}_n}{\partial W_K} \cdot \frac{\partial L}{\partial \vec{x}_n}$ it equals $\frac{\partial L}{\partial W_K}$.
+First, we will look deeper into $\frac{\partial L}{\partial \vec{x}_n}$.
+
+
+First, remember that
+$$
+K = W_K\vec{x}
+$$
+We will use chain rule to find $\frac{\partial \vec{x}_n}{\partial W_K}$, by doing $\frac{\partial \vec{x}_n}{\partial K} \cdot \frac{\partial K}{\partial W_K}$.
