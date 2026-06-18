@@ -183,7 +183,7 @@ GELU is also a smooth continuous function, so it handles backpropagation a littl
 
 Finally, the last layer is another linear layer,
 $$
-W_2 \vec{h_i} + \vec{b_2}
+W_2 \vec{h_i} + \vec{b}_2
 $$
 In this step, $\vec{h_i}$ is the vector that comes out of the non-linear layer. $W_2$ scales it back down to $d_{model}$
 
@@ -228,7 +228,7 @@ L = -\ln(\text{softmax}(W_u\cdot(\text{Attention}(\text{MLP(Attention}(\cdots)_{
 $$
 Each MLP block is 
 $$
-\text{MLP(}\vec{x}) = W_2(GELU(W_1\vec{x} + \vec{b_1})) + \vec{b_2}
+\text{MLP(}\vec{x}) = W_2(GELU(W_1\vec{x} + \vec{b_1})) + \vec{b}_2
 $$
 And again, each attention block is 
 $$
@@ -416,3 +416,135 @@ $$
 K = W_K\vec{x}
 $$
 We will use chain rule to find $\frac{\partial \vec{x}_n}{\partial W_K}$, by doing $\frac{\partial \vec{x}_n}{\partial K} \cdot \frac{\partial K}{\partial W_K}$.
+
+First, we will find $\frac{\partial \vec{x}_n}{\partial K}$.
+We can use the equation 
+$$
+\vec{x}_n = \text{softmax}(\vec{z})V\\[5pt]
+\vec{z} = \frac{Q\cdot K^T}{\sqrt{d_k}}
+$$
+To find $\frac{\partial \vec{x}_n}{\partial K}$ we use chain rule to get
+$$
+\frac{\partial \vec{x}_n}{\partial K} = \frac{\partial \vec{x}_n}{\partial \vec{z}} \cdot \frac{\partial \vec{z}}{\partial K}
+$$
+First, we can find $\frac{\partial \vec{x}_n}{\partial \vec{z}}$, which is simply $JV$. We can just treat $V$ as a constant vector so we keep it in.
+The derivative of $\frac{\partial \vec{z}}{\partial K}$ is also just as simple. We just get 
+$$
+\frac{\partial \vec{z}}{\partial K} = \frac{Q}{\sqrt{d_k}}
+$$
+Multiplying the two together we get
+$$
+\frac{\partial \vec{x}_n}{\partial K} = JV \cdot \frac{Q}{\sqrt{d_k}}
+$$
+Now, we can move onto $\frac{\partial K}{\partial W_K}$. This one is very simple, as we just do
+$$
+K = x_{n-1}W_K \\[10pt]
+\text{and then} \\[10pt]
+\frac{\partial K}{\partial W_K} = (x_{n-1})^T
+$$
+So, we get
+$$
+\frac{\partial x_n}{\partial W_K} = JV \cdot \frac{Q}{\sqrt{d_k}} \cdot (x_{n-1})^T
+$$
+The final thing we need for $\frac{\partial L}{\partial W_K}$ is $\frac{\partial L}{\partial \vec{x}_n}$. So what is $\frac{\partial L}{\partial \vec{x}_n}$?
+
+For now, let us say $\frac{\partial L}{\partial \vec{x}_n}$ is equal to $E_x^{(n)}$.
+When we want to find $\frac{\partial L}{\partial \vec{x}_{n-1}}$, we can use chain rule to get 
+$$
+\frac{\partial L}{\partial \vec{x}_{n-1}} = \frac{\partial L}{\partial \vec{x}_n} \cdot \frac{\partial \vec{x}_n}{\partial \vec{x}_{n-1}} \\[10pt]
+$$
+so
+$$
+E_x^{(n-1)} = E_x^{(n)} \cdot (\mathbf{I} + \text{MLP}'(\vec{x}_{n-1}')) \cdot (\mathbf{I} + \text{Attention}'(\vec{x}_{n-1}))
+$$
+$E_x^{(n)}$ works in updating the weights for layer n, so to go backwards we apply the formula, get $E_x^{(n-1)}$, and update the weights in that layer.
+
+We have only done the derivative for $W_K$, but the derivatives of $W_Q$ and $W_V$ are very similar, so we will not cover them. I will only state their derivatives:
+$$
+\frac{\partial L}{\partial W_Q} = E_x^{(n)} \cdot JV \cdot \frac{K}{\sqrt{d_k}} \cdot (\vec{x}_{n-1})^T \\[5pt]
+\frac{\partial L}{\partial W_V} = E_x^{(n)} \cdot \text{softmax}(\frac{QK^T}{\sqrt{d_k}}) \cdot (\vec{x}_{n-1})^T
+$$
+
+Now, the last thing that is left is to look at the $\textbf{MLP}$ derivatives.
+In the MLP, there are only 2 matrices and 2 vectors that we have to change. We will first look at the outer ones as they are the simplest.
+First of all, let $\vec{h}$ denote the vector that comes out of the non-linear section. This means that 
+$$
+\vec{x}_n = W_2\vec{h} + \vec{b}_2
+$$
+So,
+$$
+\frac{\partial \vec{x}_n}{\partial \vec{b}_2} = \mathbf{I} \\[10pt]
+\frac{\partial L}{\partial \vec{x}_n} = E_x^{(n)} \cdot \mathbf{I}\\[10pt]
+\frac{\partial L}{\partial \vec{b}_2} = E_x^{(n)}
+$$
+and 
+$$
+\frac{\partial \vec{x}_n}{\partial W_2} = \vec{h}^T \\[10pt]
+\frac{\partial L}{\partial \vec{x}_n} = E_x^{(n)} \cdot \vec{h}^T
+$$
+Now that $W_2$ and $\vec{b}_2$ are done, its time to move onto $W_1$ and $\vec{b}_1$.
+$$
+\vec{x}_n = W_2 \text{GELU}(W_1\vec{x}_{n-1}' + \vec{b}_1) + \vec{b}_2
+$$
+To get $\frac{\partial \vec{x}_n}{\partial W_1}$ we use chain rule to get
+$$
+\frac{\partial \vec{x}_n}{\partial W_1} = W_2 \cdot \text{GELU}'(W_1 \vec{x}_{n-1}' + \vec{b}_1) \cdot (x_{n-1}')^T \\[10pt]
+\frac{\partial L}{\partial W_1} = E_x^{(n)} \cdot W_2 \cdot \text{GELU}'(W_1 \vec{x}_{n-1}' + \vec{b}_1) \cdot (x_{n-1}')^T \\[10pt]
+$$
+and with $\vec{b}_1$,
+$$
+\frac{\partial \vec{x}_n}{\partial \vec{b}_1} = W_2 \cdot \text{GELU}'(W_1 \vec{x}_{n-1}' + \vec{b}_1) \\[10pt]
+\frac{\partial L}{\partial \vec{b}_1} = E_x^{(n)} \cdot W_2 \cdot \text{GELU}'(W_1 \vec{x}_{n-1}' + \vec{b}_1)
+$$
+
+The last matrices that remain are $W_O$, $W_u$ , and $W_e$ (the embedding matrix). However, in some models $W_u = W_e^T$ but we will consider when this is not the case. This is usually because the inputs represent certain concepts, while the output has to classify a token into an output.
+$W_u$ is just the final matrix, so we can express it in the equations
+$$
+\text{logits} = W_u \cdot \vec{x}_{\text{final}} \\[10pt]
+L = -\ln(\text{softmax(logits)})
+$$
+So again by using chain rule we get
+$$
+\frac{\partial L}{\partial W_u} = -\frac{1}{\hat{p}} \cdot J_{\text{softmax}} \cdot \vec{x}_{\text{final}}^T
+$$
+For $W_e$, this is a special derivative as it is the very first matrix we use at the beginning. It outputs $\vec{x}_1$, so it should be linked to $E_x^{(1)}$. To actually find the derivative we can say that 
+$$
+\vec{x}_1 = W_e \cdot \vec{t}
+$$
+Here, $\vec{t}$ is a one-hot vector with the sole purpose of extracting a specific column/row in the matrix $W_e$ to find what each token means.
+So, we take the derivative and use chain rule to get
+$$
+\frac{\partial L}{\partial W_e} = E_x^{(1)} \cdot \vec{t}^T
+$$
+The final matrix left for backpropagation is $W_O$. This is the same as many of the other derivatives. Recall that
+$$
+\vec{x}_n = W_O \cdot \text{Concat}(\Delta \vec{E}_1, \cdots, \Delta \vec{E}_h) + \vec{x}_{n-1}
+$$
+Let us denote $\text{Concat}(\Delta \vec{E}_1, \cdots, \Delta \vec{E}_h)$ as $\vec{c}$ for simplicity. Then, the derivative is simply:
+$$
+\frac{\partial L}{\partial W_O} = E_x^{(n)} \cdot \vec{c}^T
+$$
+
+There is one final part of backpropagation that is commonly used in modern LLMs. It is a technique called Layer Normalisation.
+What is Layer Normalisation? It solves two problems known as Exploding Gradients and Vanishing Gradients.
+
+LayerNorm prevents these problems by resetting the mean and variance of each vector of tokens, making sure the numbers are not too high or too low.
+
+When the values are passed through many Attention and MLP blocks, if the numbers are above 1 there is a good chance they will blow up exponentially (Exploding Gradients) and if they are below one they will shrink to 0 (Vanishing Gradients). What Layer Norm does is it takes every value and does two things to it - first, it subtracts the mean of the data from it and divides the resulting number by the standard deviation. The second step is it passes the final value through a linear function $\text{LN}(\vec{x}_i)\gamma \hat{x}_i + \beta$ where $\gamma$ and $\beta$ are learnable parameters that can be changed. This stops the data from growing too big or shrinking too small. There are independant sets of $\gamma$ and $\beta$ in each Attention and MLP block.
+
+Modern architecture uses Pre-LayerNorm, where we first normalise the data then send it through the Attention and MLP blocks.
+
+This changes the formluae for the Attention and MLP blocks. Now, the flow of data looks like this:
+$$
+\vec{x}_{n-1}' = \vec{x}_{n-1} + \text{Attention}(\text{LN}(\vec{x}_{n-1})) \\[10pt]
+\vec{x}_{n} = \vec{x}_{n-1}' + \text{MLP}(\text{LN}(\vec{x}_{n-1}'))
+$$
+Now, we mentioned that all of the parameters are learned. We will now look at the derivatives for $\gamma$ and $\beta$
+
+First, we will look at the Attention side.
+At the very end of the Attention block, the final output vector $\vec{x}_n$ is calculated by doing
+$$
+\vec{x}_n = \vec{x}_{n-1} + \text{Output}_{\text{Attn}}
+$$
+Here, $\text{Output}_{\text{Attn}}$ is just equal to $\vec{c}W_O$, $\vec{c}$ being the attention head outputs.
+We can say that $\vec{c}$ is just a vector 
