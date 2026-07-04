@@ -539,12 +539,59 @@ $$
 \vec{x}_{n-1}' = \vec{x}_{n-1} + \text{Attention}(\text{LN}(\vec{x}_{n-1})) \\[10pt]
 \vec{x}_{n} = \vec{x}_{n-1}' + \text{MLP}(\text{LN}(\vec{x}_{n-1}'))
 $$
-Now, we mentioned that all of the parameters are learned. We will now look at the derivatives for $\gamma$ and $\beta$
+Now, we mentioned that all of the parameters are learned. 
 
-First, we will look at the Attention side.
-At the very end of the Attention block, the final output vector $\vec{x}_n$ is calculated by doing
+The only things that changed from before are the derivatives of the Attention blocks, MLP blocks, and $E_x$.
+
+First, we will look at $\frac{\delta \hat{x}_i}{\delta x_j}$ to get the jacobian of LayerNorm.
+The formula is
 $$
-\vec{x}_n = \vec{x}_{n-1} + \text{Output}_{\text{Attn}}
+\hat{x}_i = \frac{x_i - \mu}{\sigma}
 $$
-Here, $\text{Output}_{\text{Attn}}$ is just equal to $\vec{c}W_O$, $\vec{c}$ being the attention head outputs.
-We can say that $\vec{c}$ is just a vector 
+So applying quotient rule we get
+$$
+\frac{\partial \hat{x}_i}{\partial x_j} = \frac{\frac{\partial (x_i-\mu)}{\partial x_j}\cdot \sigma - (x_i - \mu) \cdot \frac{\partial \sigma}{\partial x_j}}{\sigma ^2}
+$$
+Lets look at the first term, $\frac{\partial (x_i-\mu)}{\partial x_j}$
+First of all, remember that
+$$
+\mu = \frac{1}{n} \sum_{k=1}^{n} x_k  
+$$
+So,
+$$
+\frac{\partial(x_i - \mu)}{\partial x_j} = \frac{\partial x_i}{\partial x_j} - \frac{\partial \mu}{\partial x_j}
+$$
+Now, we know that $\frac{\partial x_i}{\partial x_j} = \delta_{ij}$ and $\frac{\partial \mu}{\partial x_j}$ simply equals $\frac{1}{n}$ because only one $x_j$ is considered and we multiply that by $\frac{1}{n}$ so $\frac{\partial \mu}{\partial x_j} = \frac{1}{n}$. Putting it together we get
+$$
+\frac{\partial(x_i - \mu)}{\partial x_j} = \delta_{ij} - \frac{1}{n}
+$$
+Next, we will look at $\frac{\partial \sigma}{\partial x_j}$.
+Remember that
+$$
+\sigma = \sqrt{\frac{1}{n} \sum_{k} (x_k - \mu)^2 + \epsilon}
+$$
+The only reason we include $\epsilon$ is so that we dont accidentally divide by zero, so it is usually set to a very small value like $10^{-15}$.
+In this case, it is easier to take the derivative of $\frac{\partial \sigma ^2}{\partial x_j}$ so
+$$
+\frac{\partial \sigma^2}{\partial x_j} = \frac{1}{n} \sum_{k} 2(x_k - \mu) \frac{\partial(x_k - \mu)}{\partial x_j}
+$$
+We just showed that $\frac{\partial(x_k - \mu)}{\partial x_j} = \delta_{ij} - \frac{1}{n}$ so subbing that in and expanding the sum we get:
+$$
+\frac{2}{n} \left[ (x_j - \mu) - \frac{1}{n} \sum_{k} (x_k - \mu) \right]
+$$
+The second term $\frac{1}{n} \sum_{k} (x_k - \mu)$ is essentially calculating the mean of deviations from the mean, which is always $0$. We can simplify and use chain rule where $\sigma = \sqrt{\sigma ^2}$ (we are treating $\sigma^2$ as its own variable) and in the end we get
+$$
+\frac{\partial \sigma}{\partial x_j} = \frac{1}{2\sigma} \cdot \frac{2(x_j - \mu)}{n} = \frac{x_j - \mu}{n\sigma} = \frac{\hat{x}_j}{n}
+$$
+Now, if we sub our derivatives back into the main derivative and simplify we get the expression
+$$
+\frac{\partial \hat{x}_i}{\partial x_j} = \frac{1}{\sigma} \left( \delta_{ij} - \frac{1}{n} - \frac{\hat{x}_i \hat{x}_j}{n} \right)
+$$
+If we look at the LayerNorm equation, which is $\hat{x}_i = \frac{x_i-\mu}{\sigma}$ the derivative is 
+$$
+\frac{\partial LN(\vec{x})_i}{\partial x_j} = \gamma \frac{\partial \hat{x}_i}{\partial x_j} + 0
+$$
+So the derivative is
+$$
+J_{\text{LN},ij} = \frac{\gamma}{\sigma} \left( \delta_{ij} - \frac{1}{n} - \frac{\hat{x}_i \hat{x}_j}{n} \right)
+$$
